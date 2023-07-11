@@ -15,7 +15,7 @@ class Test_VenueAPI(unittest.TestCase):
         self.client.close()
         return super().tearDown()
     
-    def test_get_all_venues(self):
+    def test_get_all_venues_gets_at_least_one_city(self):
         response = self.client.get(f'{self.base_url}/V2/venues')
         
         # Assert the response status code is OK
@@ -27,4 +27,18 @@ class Test_VenueAPI(unittest.TestCase):
         response_json = html_to_json.convert(response.text)
         response_json_main = response_json["body"][0]["div"][0]["main"][0]
         
-        self.assertTrue( "h3" in response_json_main, "The response does not contain any venue information. Perhaps the database is not loaded?" )
+        self.assertTrue( "h3" in response_json_main, "The response does not contain any cities. Perhaps the database is not loaded?" )
+
+    def test_get_all_venues_gets_at_least_one_venue(self):
+        response = self.client.get(f'{self.base_url}/V2/venues')
+        
+        # Assert the response status code is OK
+        self.assertEqual(response.status_code, 200)
+        
+        # Assert the response body or headers
+        response_json = response.json
+        
+        response_json = html_to_json.convert(response.text)
+        response_json_venue_list = response_json["body"][0]["div"][0]["main"][0]["ul"][0]
+        
+        self.assertTrue( "li" in response_json_venue_list, "The response does not contain any venue information within a city." )        

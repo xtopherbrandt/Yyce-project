@@ -11,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
+from flask_migrate import Migrate
 from forms import *
 #----------------------------------------------------------------------------#
 # App Config.
@@ -20,6 +21,7 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
+Migrate( app, db )
 
 # TODO: connect to a local postgresql database
 
@@ -39,6 +41,8 @@ class Venue(db.Model):
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
+    def __repr__(self):
+      return f'<Venue {self.id} "{self.name}">'
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 class Artist(db.Model):
@@ -85,7 +89,7 @@ def index():
 
 @app.route('/V2/venues')
 def venues_v2():
-  data = []
+  data = Venue.query.all()
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues')
