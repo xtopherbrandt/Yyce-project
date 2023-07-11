@@ -83,6 +83,11 @@ def index():
 #  Venues
 #  ----------------------------------------------------------------
 
+@app.route('/V2/venues')
+def venues_v2():
+  data = []
+  return render_template('pages/venues.html', areas=data)
+
 @app.route('/venues')
 def venues():
   # TODO: replace with real venues data.
