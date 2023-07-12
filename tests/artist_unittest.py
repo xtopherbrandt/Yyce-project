@@ -22,9 +22,22 @@ class Test_ArtistAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         
         # Assert the response body or headers
-        response_json = response.json
         
         response_json = html_to_json.convert(response.text)
         response_json_main = response_json["body"][0]["div"][0]["main"][0]["ul"][0]
         
         self.assertTrue( "li" in response_json_main, "The response does not contain any Artists. Perhaps the database is not loaded?" )
+        
+
+    def test_search_any_artist_finds_at_least_one(self):
+        response = self.client.post(f'{self.base_url}/V2/artists/search',{"search_term": ""})
+        
+        print(response.text)
+        # Assert the response status code is OK
+        self.assertEqual(response.status_code, 200)
+
+        # Assert the response body or headers      
+        response_json = html_to_json.convert(response.text)
+        response_json_venue_list = response_json["body"][0]["div"][0]["main"][0]["ul"][0]
+
+        self.assertTrue( "li" in response_json_venue_list, "The search response does not contain any artists." )        
