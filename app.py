@@ -8,6 +8,7 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import select
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
@@ -56,6 +57,9 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    
+    def __repr__(self):
+      return f'<Artist {self.id} "{self.name}">'
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -89,7 +93,27 @@ def index():
 
 @app.route('/V2/venues')
 def venues_v2():
-  data = Venue.query.all()
+  data=[]
+
+  cities_statement = select(Venue.city, Venue.state).distinct().order_by(Venue.city)
+  
+  cities = db.session.execute(cities_statement).all()
+  for city in cities:
+    venues_in_city_statement = select(Venue.id, Venue.name).where(Venue.city == city[0] ).where(Venue.state == city[1] )
+    venues = db.session.execute(venues_in_city_statement)
+    city_data_json = {
+      "city": city[0],
+      "state": city[1],
+      "venues": []
+    }
+
+    for venue in venues:
+      city_data_json["venues"].append({
+        "id": venue[0],
+        "name": venue[1],
+        "num_upcoming_shows": 0 #requires a many-many relationship with Artists
+      })
+    data.append( city_data_json )      
   return render_template('pages/venues.html', areas=data)
 
 @app.route('/venues')
@@ -249,6 +273,15 @@ def delete_venue(venue_id):
 
 #  Artists
 #  ----------------------------------------------------------------
+
+@app.route('/V2/artists')
+def artists_v2():
+  
+  artist_statement = select(Artist.id, Artist.name)
+  data = db.session.execute(artist_statement)
+  return render_template('pages/artists.html', artists=data)
+
+
 @app.route('/artists')
 def artists():
   # TODO: replace with real data returned from querying the database
