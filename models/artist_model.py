@@ -1,16 +1,19 @@
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import String
 from app import db
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    city = db.Column(db.String(120), nullable=False)
-    state = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.String(120), nullable=False)
-    genres = db.Column(db.String(120), nullable=False)
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    city = Column(String(120), nullable=False)
+    state = Column(String(120), nullable=False)
+    phone = Column(String(120), nullable=False)
+    genres = Column(String(120), nullable=False)
+    image_link = Column(String(500))
+    facebook_link = Column(String(120))
     
     def __repr__(self):
       return f'<Artist {self.id} "{self.name}">'

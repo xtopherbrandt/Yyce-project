@@ -1,16 +1,22 @@
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy.orm import relationship
+from models import show_model
 from app import db
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    city = db.Column(db.String(120), nullable=False)
-    state = db.Column(db.String(120), nullable=False)
-    address = db.Column(db.String(120), nullable=False)
-    phone = db.Column(db.String(120), nullable=False)
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    city = Column(String(120), nullable=False)
+    state = Column(String(120), nullable=False)
+    address = Column(String(120), nullable=False)
+    phone = Column(String(120), nullable=False)
+    image_link = Column(String(500))
+    facebook_link = Column(String(120))
+    shows = relationship("Artist", secondary=db.Table("Show"))
 
     def __repr__(self):
       return f'<Venue {self.id} "{self.name}">'
