@@ -53,10 +53,10 @@
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
             <li>
-              {% if (request.endpoint == 'venues') or
-                (request.endpoint == 'search_venues') or
+              {% if (request.endpoint == 'venues_v2') or
+                (request.endpoint == 'search_venues_v2') or
                 (request.endpoint == 'show_venue') %}
-              <form class="search" method="post" action="/venues/search">
+              <form class="search" method="post" action="/V2/venues/search">
                 <input class="form-control"
                   type="search"
                   name="search_term"
@@ -78,8 +78,8 @@
             </li>
           </ul>
           <ul class="nav navbar-nav">
-            <li {% if request.endpoint == 'venues' %} class="active" {% endif %}><a href="{{ url_for('venues') }}">Venues</a></li>
-            <li {% if request.endpoint == 'artists' %} class="active" {% endif %}><a href="{{ url_for('artists') }}">Artists</a></li>
+            <li {% if request.endpoint == 'venues' %} class="active" {% endif %}><a href="{{ url_for('venues_v2') }}">Venues</a></li>
+            <li {% if request.endpoint == 'artists' %} class="active" {% endif %}><a href="{{ url_for('artists_v2') }}">Artists</a></li>
             <li {% if request.endpoint == 'shows' %} class="active" {% endif %}><a href="{{ url_for('shows') }}">Shows</a></li>
           </ul>
         </div><!--/.nav-collapse -->

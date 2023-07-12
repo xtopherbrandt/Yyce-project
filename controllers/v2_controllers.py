@@ -35,6 +35,34 @@ def venues_v2():
   return render_template('pages/venues.html', areas=data)
 
 
+@app.route('/V2/venues/search', methods=['POST'])
+def search_venues_v2():
+  # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+  # seach for Hop should return "The Musical Hop".
+  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  
+  search_term = request.form.get('search_term', '')
+  
+  venue_search_statement = select(venue_model.Venue.id, venue_model.Venue.name).where(venue_model.Venue.name.ilike( f'%{search_term}%'))
+  search_results = db.session.execute(venue_search_statement)
+  count = 0
+  data = []
+  for venue in search_results.all():
+    data.append({
+      "id": venue[0],
+      "name": venue[1],
+      "num_upcoming_shows": 0
+    })
+    count += 1
+    
+  response={
+    "count": count,
+    "data": data
+  }
+
+  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+
+
 #  Artists
 #  ----------------------------------------------------------------
 
