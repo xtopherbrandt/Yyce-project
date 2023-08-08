@@ -1,15 +1,27 @@
 from flask import render_template, request, Response, flash, redirect, url_for
 from sqlalchemy import select
+from sqlalchemy.orm import Session, Query
 
 from app import app, db
 from models import artist_model, venue_model
 from forms import *
+import sys
 
 #  Venues
 #  ----------------------------------------------------------------
 
 
-@app.route('/V2/venues')
+@app.route('/V2/venues/<int:venue_id>', methods=['GET'])
+def show_venue_v2(venue_id):
+  venue_information = venue_model.Venue.query.get(venue_id)
+  
+  if venue_information is not None:
+    return render_template('pages/show_venue.html', venue=venue_information)
+  else :
+    flash(f'Could not find a venue with id: {venue_id}')
+    return render_template('pages/home.html')
+ 
+@app.route('/V2/venues', methods=['GET'])
 def venues_v2():
   data=[]
 
@@ -59,6 +71,119 @@ def search_venues_v2():
 
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
+@app.route('/V2/venues/create', methods=['GET'])
+def create_venue_form_v2():
+  form = VenueForm()
+  return render_template('forms/new_venue.html', form=form)
+
+@app.route('/V2/venues/create', methods=['POST'])
+def create_venue_submission_v2():
+  name = request.form.get('name','')
+  city = request.form.get('city','')
+  state = request.form.get('state','')
+  address = request.form.get('address','')
+  phone = request.form.get('phone','')
+  genres = request.form.get('genres','')
+  facebook_link = request.form.get('facebook_link','')
+  image_link = request.form.get('image_link','')
+  website_link = request.form.get('website_link','')
+  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
+  seeking_description = request.form.get('seeking_description','')
+  
+  with Session(db.engine) as session:
+    try:    
+      venue = venue_model.Venue( 
+                                name=name, 
+                                city=city, 
+                                state=state, 
+                                address=address, 
+                                phone=phone, 
+                                genres = genres,
+                                facebook_link=facebook_link, 
+                                image_link=image_link, 
+                                website_link=website_link, 
+                                seeking_talent=seeking_talent, 
+                                seeking_talent_description=seeking_description)
+      session.add(venue)
+      session.commit()
+      flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    except :
+      session.rollback()
+      flash('Venue ' + request.form['name'] + ' could not be listed.')
+    finally :
+      return render_template('pages/home.html')
+
+  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+
+@app.route('/V2/venues/<int:venue_id>/edit', methods=['GET'])
+def edit_venue_form_v2(venue_id):
+  form = VenueForm()
+  session = Session(db.engine)
+  venue = session.query(venue_model.Venue).get(venue_id)
+  return render_template('forms/edit_venue.html', form = form, venue=venue)
+
+@app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
+def edit_venue_v2(venue_id):
+  name = request.form.get('name','')
+  city = request.form.get('city','')
+  state = request.form.get('state','')
+  address = request.form.get('address','')
+  phone = request.form.get('phone','')
+  genres = request.form.get('genres','')
+  facebook_link = request.form.get('facebook_link','')
+  image_link = request.form.get('image_link','')
+  website_link = request.form.get('website_link','')
+  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
+  seeking_description = request.form.get('seeking_description','')
+  
+  print( genres )
+  with Session(db.engine) as session:
+    try:    
+      venue = session.query(venue_model.Venue).get(venue_id)
+      venue.name = name
+      venue.city = city
+      venue.state = state
+      venue.address = address
+      venue.phone = phone
+      venue.genres = genres
+      venue.facebook_link = facebook_link
+      venue.image_link = image_link
+      venue.website_link = website_link
+      venue.seeking_talent = seeking_talent
+      venue.seeking_talent_description = seeking_description
+      
+      session.add(venue)
+      session.commit()
+      flash('Venue ' + request.form['name'] + ' was successfully updated!')
+    except :
+      session.rollback()
+      flash('Venue ' + request.form['name'] + ' could not be updated.')
+    finally :
+      return render_template('pages/home.html')
+    
+@app.route('/V2/venues/<int:venue_id>/delete', methods=['GET'])
+@app.route('/V2/venues/<int:venue_id>', methods=['DELETE'])
+def delete_venue_v2(venue_id):
+  error = False
+  with Session(db.engine) as session:
+    try:
+      venue = session.query(venue_model.Venue).get(venue_id)
+      session.delete(venue)
+      session.commit()
+      print (f'Venue {venue.name} deleted')
+      flash(f'Venue {venue.name} was successfully deleted.')
+    except:
+      error = True
+      flash(f'Venue {venue.name} could not be deleted.')
+      session.rollback()
+      print ('delete rolled back')
+    finally :
+      if error :
+        AssertionError()
+      else:
+        return render_template('pages/home.html')
+
+  return None
 
 #  Artists
 #  ----------------------------------------------------------------
