@@ -82,11 +82,11 @@ class Test_VenueAPI(unittest.TestCase):
             "state" : "test_venue_state",
             "address" : "test_venue_address",
             "phone" : "test_venue_phone",
-            "genres" : "test_venue_genre1, test_venue_genre2",
+            "genres" : ['RocknRoll','Folk'],
             "facebook_link" : "test_venue_facebook_link",
             "image_link" : "test_venue_image_link",
             "website_link" : "test_venue_website_link",
-            "seeking_talent" : "test_venue_seeking_talent",
+            "seeking_talent" : True,
             "seeking_talent_description" : "test_venue_seeking_talent_description"
         }
         
@@ -110,11 +110,11 @@ class Test_VenueAPI(unittest.TestCase):
             "state" : "test_venue_state",
             "address" : "test_venue_address",
             "phone" : "test_venue_phone",
-            "genres" : "test_venue_genre1, test_venue_genre2",
+            "genres" : ['RocknRoll','Folk'],
             "facebook_link" : "test_venue_facebook_link",
             "image_link" : "test_venue_image_link",
             "website_link" : "test_venue_website_link",
-            "seeking_talent" : "test_venue_seeking_talent",
+            "seeking_talent" : True,
             "seeking_talent_description" : "test_venue_seeking_talent_description"
         }
         
@@ -132,6 +132,6 @@ class Test_VenueAPI(unittest.TestCase):
         self.assertTrue( "li" in response_json_venue_list, "The venue could not be retrieved. Either it wasn't properly posted or the search did not work. This is a round trip test." )   
         response_json_venue_uri = response_json["body"][0]["div"][0]["main"][0]["ul"][0]["li"][0]["a"][0]["_attributes"]['href']
         print (response_json_venue_uri)
-        delete_response = self.client.delete(f'{self.base_url}/V2/{response_json_venue_uri}')
+        delete_response = self.client.delete(f'{self.base_url}{response_json_venue_uri}')
         
         self.assertEqual( delete_response.status_code, 200 )
