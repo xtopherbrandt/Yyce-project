@@ -4,8 +4,9 @@ from sqlalchemy.orm import Session, Query
 
 from app import app, db
 from models import artist_model, venue_model
+from models.genres_enum import Genres
 from forms import *
-import sys
+import json
 
 #  Venues
 #  ----------------------------------------------------------------
@@ -14,7 +15,8 @@ import sys
 @app.route('/V2/venues/<int:venue_id>', methods=['GET'])
 def show_venue_v2(venue_id):
   venue_information = venue_model.Venue.query.get(venue_id)
-  
+  temp_genres = json.loads(venue_information.genres)
+  venue_information.genres = [ Genres[genre].value for genre in temp_genres ]
   if venue_information is not None:
     return render_template('pages/show_venue.html', venue=venue_information)
   else :
@@ -83,12 +85,14 @@ def create_venue_submission_v2():
   state = request.form.get('state','')
   address = request.form.get('address','')
   phone = request.form.get('phone','')
-  genres = request.form.getlist('genres')
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
   seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
   seeking_description = request.form.get('seeking_description','')
+    
+  genres_input = request.form.getlist('genres')
+  genres_json = json.dumps(genres_input)
   
   with Session(db.engine) as session:
     try:    
@@ -98,7 +102,7 @@ def create_venue_submission_v2():
                                 state=state, 
                                 address=address, 
                                 phone=phone, 
-                                genres = genres,
+                                genres = genres_json,
                                 facebook_link=facebook_link, 
                                 image_link=image_link, 
                                 website_link=website_link, 
@@ -120,6 +124,7 @@ def edit_venue_form_v2(venue_id):
   form = VenueForm()
   session = Session(db.engine)
   venue = session.query(venue_model.Venue).get(venue_id)
+  venue.genres = json.loads(venue.genres)
   return render_template('forms/edit_venue.html', form = form, venue=venue)
 
 @app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
@@ -129,14 +134,14 @@ def edit_venue_v2(venue_id):
   state = request.form.get('state','')
   address = request.form.get('address','')
   phone = request.form.get('phone','')
-  genres = request.form.getlist('genres')
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
   seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
   seeking_description = request.form.get('seeking_description','')
   
-  print(genres)
+  genres_input = request.form.getlist('genres')
+  genres_json = json.dumps(genres_input)
             
   with Session(db.engine) as session:
     try:    
@@ -146,7 +151,7 @@ def edit_venue_v2(venue_id):
       venue.state = state
       venue.address = address
       venue.phone = phone
-      venue.genres = genres
+      venue.genres = genres_json
       venue.facebook_link = facebook_link
       venue.image_link = image_link
       venue.website_link = website_link
