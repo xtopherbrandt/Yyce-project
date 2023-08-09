@@ -83,7 +83,7 @@ def create_venue_submission_v2():
   state = request.form.get('state','')
   address = request.form.get('address','')
   phone = request.form.get('phone','')
-  genres = request.form.get('genres','')
+  genres = request.form.getlist('genres')
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
@@ -129,14 +129,15 @@ def edit_venue_v2(venue_id):
   state = request.form.get('state','')
   address = request.form.get('address','')
   phone = request.form.get('phone','')
-  genres = request.form.get('genres','')
+  genres = request.form.getlist('genres')
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
   seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
   seeking_description = request.form.get('seeking_description','')
   
-  print( genres )
+  print(genres)
+            
   with Session(db.engine) as session:
     try:    
       venue = session.query(venue_model.Venue).get(venue_id)
