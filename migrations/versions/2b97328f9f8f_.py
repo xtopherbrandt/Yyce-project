@@ -38,7 +38,7 @@ def upgrade():
                existing_type=sa.VARCHAR(),
                nullable=False)
         batch_op.alter_column('seeking_talent',
-               existing_type=sa.VARCHAR(),
+               existing_type=sa.Boolean(),
                nullable=False)
 
     # ### end Alembic commands ###
