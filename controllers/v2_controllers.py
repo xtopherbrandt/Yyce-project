@@ -90,7 +90,7 @@ def create_venue_submission_v2():
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
   seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
-  seeking_description = request.form.get('seeking_description','')
+  seeking_talent_description = request.form.get('seeking_description','')
     
   genres_input = request.form.getlist('genres')
   genres_json = json.dumps(genres_input)
@@ -108,7 +108,7 @@ def create_venue_submission_v2():
                                 image_link=image_link, 
                                 website_link=website_link, 
                                 seeking_talent=seeking_talent, 
-                                seeking_talent_description=seeking_description)
+                                seeking_talent_description=seeking_talent_description)
       session.add(venue)
       session.commit()
       flash('Venue ' + request.form['name'] + ' was successfully listed!')
@@ -139,7 +139,7 @@ def edit_venue_v2(venue_id):
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
   seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
-  seeking_description = request.form.get('seeking_description','')
+  seeking_talent_description = request.form.get('seeking_description','')
   
   genres_input = request.form.getlist('genres')
   genres_json = json.dumps(genres_input)
@@ -157,7 +157,7 @@ def edit_venue_v2(venue_id):
       venue.image_link = image_link
       venue.website_link = website_link
       venue.seeking_talent = seeking_talent
-      venue.seeking_talent_description = seeking_description
+      venue.seeking_talent_description = seeking_talent_description
       
       session.add(venue)
       session.commit()
@@ -274,5 +274,51 @@ def edit_artist_v2(artist_id):
     except :
       session.rollback()
       flash('Artist ' + request.form['name'] + ' could not be updated.')
+    finally :
+      return render_template('pages/home.html')
+    
+
+@app.route('/V2/artists/create', methods=['GET'])
+def create_artist_form_v2():
+  form = ArtistForm()
+  return render_template('forms/new_artist.html', form=form)
+
+@app.route('/V2/artists/create', methods=['POST'])
+def create_artist_submission_v2():
+  name = request.form.get('name','')
+  city = request.form.get('city','')
+  state = request.form.get('state','')
+  phone = request.form.get('phone','')
+  facebook_link = request.form.get('facebook_link','')
+  image_link = request.form.get('image_link','')
+  website_link = request.form.get('website_link','')
+  seeking_venue = True if request.form.get('seeking_venue','') == 'y' else False
+  seeking_description = request.form.get('seeking_description','')
+    
+  genres_input = request.form.getlist('genres')
+  genres_json = json.dumps(genres_input)
+ 
+  with Session(db.engine) as session:
+    try:    
+      artist = Artist( 
+                      name=name, 
+                      city=city, 
+                      state=state, 
+                      phone=phone, 
+                      genres = genres_json,
+                      facebook_link=facebook_link, 
+                      image_link=image_link, 
+                      website_link=website_link, 
+                      seeking_venue=seeking_venue, 
+                      seeking_description=seeking_description)
+      print(artist)
+      session.add(artist)
+      session.commit()
+      print("committed")
+      flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    except :
+      session.rollback()
+      print("rolled back")
+      flash('Artist ' + request.form['name'] + ' could not be listed.')
     finally :
       return render_template('pages/home.html')

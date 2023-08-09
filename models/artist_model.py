@@ -19,6 +19,16 @@ class Artist(db.Model):
     seeking_description = Column(String(500))
     
     def __repr__(self):
-      return f'<Artist {self.id} "{self.name}">'
+      return f'<Artist {self.id} \n \
+                name: {self.name} \n \
+                city: {self.city} \n \
+                state: {self.state} \n \
+                phone: {self.phone} \n \
+                genres: {self.genres} \n \
+                image link: {self.image_link} \n \
+                facebook link: {self.facebook_link} \n \
+                website link: {self.website_link} \n \
+                seeking venue: {self.seeking_venue} \n \
+                seeking description: {self.seeking_description} >'
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
