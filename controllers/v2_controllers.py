@@ -322,3 +322,27 @@ def create_artist_submission_v2():
       flash('Artist ' + request.form['name'] + ' could not be listed.')
     finally :
       return render_template('pages/home.html')
+    
+@app.route('/V2/artists/<int:artist_id>/delete', methods=['GET'])
+@app.route('/V2/artists/<int:artist_id>', methods=['DELETE'])
+def delete_artist_v2(artist_id):
+  error = False
+  with Session(db.engine) as session:
+    try:
+      artist = session.query(Artist).get(artist_id)
+      session.delete(artist)
+      session.commit()
+      print (f'Artist {artist.name} deleted')
+      flash(f'Artist {artist.name} was successfully deleted.')
+    except:
+      error = True
+      flash(f'Artist {artist.name} could not be deleted.')
+      session.rollback()
+      print ('delete rolled back')
+    finally :
+      if error :
+        AssertionError()
+      else:
+        return render_template('pages/home.html')
+
+  return None
