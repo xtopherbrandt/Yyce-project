@@ -33,6 +33,7 @@ class Test_VenueAPI(unittest.TestCase):
         
     
     def test_get_all_venues_gets_at_least_one_city(self):
+        response = self.client.get(f'{self.base_url}/V2/venues')
         
         # Assert the response status code is OK
         self.assertEqual(response.status_code, 200)
