@@ -3,7 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, Query
 
 from app import app, db
-from models import artist_model, venue_model
+from models import venue_model
+from models.artist_model import Artist
 from models.genres_enum import Genres
 from forms import *
 import json
@@ -197,16 +198,22 @@ def delete_venue_v2(venue_id):
 @app.route('/V2/artists')
 def artists_v2():
   
-  artist_statement = select(artist_model.Artist.id, artist_model.Artist.name)
-  data = db.session.execute(artist_statement)
-  return render_template('pages/artists.html', artists=data)
+  artists = Artist.query.all()
+  return render_template('pages/artists.html', artists=artists)
 
+@app.route('/V2/artists/<int:artist_id>', methods=['GET'])
+def show_artist_v2(artist_id):
+  artist = Artist.query.get(artist_id)
+  temp_genres = json.loads(artist.genres)
+  artist.genres = [ Genres[genre].value for genre in temp_genres ]
+  return render_template('pages/show_artist.html', artist=artist)
+  
 @app.route('/V2/artists/search', methods=['POST'])
 def search_artists_v2():
     
   search_term = request.form.get('search_term', '')
   
-  artist_search_statement = select(artist_model.Artist.id, artist_model.Artist.name).where(artist_model.Artist.name.ilike( f'%{search_term}%'))
+  artist_search_statement = select(Artist.id, Artist.name).where(Artist.name.ilike( f'%{search_term}%'))
   search_results = db.session.execute(artist_search_statement)
   count = 0
   data = []
@@ -224,3 +231,48 @@ def search_artists_v2():
   }
   
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
+
+@app.route('/V2/artists/<int:artist_id>/edit', methods=['GET'])
+def edit_artist_form_v2(artist_id):
+  form = ArtistForm()
+  artist = Artist.query.get(artist_id)
+  artist.genres = json.loads(artist.genres)
+  return render_template('forms/edit_artist.html', form = form, artist=artist)
+
+@app.route('/V2/artists/<int:artist_id>/edit', methods=['POST'])
+def edit_artist_v2(artist_id):
+  name = request.form.get('name','')
+  city = request.form.get('city','')
+  state = request.form.get('state','')
+  phone = request.form.get('phone','')
+  facebook_link = request.form.get('facebook_link','')
+  image_link = request.form.get('image_link','')
+  website_link = request.form.get('website_link','')
+  seeking_venue = True if request.form.get('seeking_venue','') == 'y' else False
+  seeking_description = request.form.get('seeking_description','')
+  
+  genres_input = request.form.getlist('genres')
+  genres_json = json.dumps(genres_input)
+            
+  with Session(db.engine) as session:
+    try:    
+      artist = session.query(Artist).get(artist_id)
+      artist.name = name
+      artist.city = city
+      artist.state = state
+      artist.phone = phone
+      artist.genres = genres_json
+      artist.facebook_link = facebook_link
+      artist.image_link = image_link
+      artist.website_link = website_link
+      artist.seeking_venue = seeking_venue
+      artist.seeking_description = seeking_description
+      
+      session.add(artist)
+      session.commit()
+      flash('Artist ' + request.form['name'] + ' was successfully updated!')
+    except :
+      session.rollback()
+      flash('Artist ' + request.form['name'] + ' could not be updated.')
+    finally :
+      return render_template('pages/home.html')
