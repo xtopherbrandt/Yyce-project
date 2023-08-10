@@ -44,6 +44,7 @@ def show_venue_v2(venue_id):
   venue_information = {
     "id": venue.id,
     "name": venue.name,
+    "address": venue.address,
     "city": venue.city,
     "state": venue.state,
     "phone": venue.phone,
@@ -59,7 +60,6 @@ def show_venue_v2(venue_id):
     "past_shows": past_shows_reshaped
   }
   
-  print(venue_information)
   if venue is not None:
     return render_template('pages/show_venue.html', venue=venue_information)
   else :
@@ -248,7 +248,46 @@ def show_artist_v2(artist_id):
   artist = Artist.query.get(artist_id)
   temp_genres = json.loads(artist.genres)
   artist.genres = [ Genres[genre].value for genre in temp_genres ]
-  return render_template('pages/show_artist.html', artist=artist)
+    
+  upcoming_shows_statement = select(Show.show_datetime, Venue.id, Venue.name, Venue.image_link ).select_from(Show).join(Venue).where(Show.show_datetime >= current_date() ).where(Show.artist_id == artist_id)
+  upcoming_shows = db.session.execute(upcoming_shows_statement).all()
+
+  past_shows_statement = select(Show.show_datetime, Venue.id, Venue.name, Venue.image_link).select_from(Show).join(Venue).where(Show.show_datetime < current_date() ).where(Show.artist_id == artist_id)
+  past_shows = db.session.execute(past_shows_statement).all()
+ 
+  upcoming_shows_reshaped = list( map( lambda show: {
+    "start_time": show[0].isoformat(),
+    "venue_id": show[1],
+    "venue_name": show[2],
+    "venue_image_link": show[3]}, 
+      upcoming_shows ) )
+   
+  past_shows_reshaped = list( map( lambda show: {
+    "start_time": show[0].isoformat(),
+    "venue_id": show[1],
+    "venue_name": show[2],
+    "venue_image_link": show[3]}, 
+      past_shows ) )
+  
+  artist_information = {
+    "id": artist.id,
+    "name": artist.name,
+    "city": artist.city,
+    "state": artist.state,
+    "phone": artist.phone,
+    "image_link": artist.image_link,
+    "facebook_link": artist.facebook_link,
+    "website_link": artist.website_link,
+    "genres": artist.genres,
+    "seeking_venue": artist.seeking_venue,
+    "seeking_description": artist.seeking_description,
+    "upcoming_shows_count": len(upcoming_shows),
+    "upcoming_shows": upcoming_shows_reshaped,
+    "past_shows_count": len(past_shows),
+    "past_shows": past_shows_reshaped
+  }
+  
+  return render_template('pages/show_artist.html', artist=artist_information)
   
 @app.route('/V2/artists/search', methods=['POST'])
 def search_artists_v2():
