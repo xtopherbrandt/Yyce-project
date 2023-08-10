@@ -1,10 +1,12 @@
 from flask import render_template, request, Response, flash, redirect, url_for
 from sqlalchemy import select
-from sqlalchemy.orm import Session, Query
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import current_date
 
 from app import app, db
-from models import venue_model
+from models.venue_model import Venue
 from models.artist_model import Artist
+from models.show_model import Show
 from models.genres_enum import Genres
 from forms import *
 import json
@@ -15,7 +17,7 @@ import json
 
 @app.route('/V2/venues/<int:venue_id>', methods=['GET'])
 def show_venue_v2(venue_id):
-  venue_information = venue_model.Venue.query.get(venue_id)
+  venue_information = Venue.query.get(venue_id)
   temp_genres = json.loads(venue_information.genres)
   venue_information.genres = [ Genres[genre].value for genre in temp_genres ]
   if venue_information is not None:
@@ -28,11 +30,11 @@ def show_venue_v2(venue_id):
 def venues_v2():
   data=[]
 
-  cities_statement = select(venue_model.Venue.city, venue_model.Venue.state).distinct().order_by(venue_model.Venue.city)
+  cities_statement = select(Venue.city, Venue.state).distinct().order_by(Venue.city)
   
   cities = db.session.execute(cities_statement).all()
   for city in cities:
-    venues_in_city_statement = select(venue_model.Venue.id, venue_model.Venue.name).where(venue_model.Venue.city == city[0] ).where(venue_model.Venue.state == city[1] )
+    venues_in_city_statement = select(Venue.id, Venue.name).where(Venue.city == city[0] ).where(Venue.state == city[1] )
     venues = db.session.execute(venues_in_city_statement)
     city_data_json = {
       "city": city[0],
@@ -55,7 +57,7 @@ def search_venues_v2():
   
   search_term = request.form.get('search_term', '')
   
-  venue_search_statement = select(venue_model.Venue.id, venue_model.Venue.name).where(venue_model.Venue.name.ilike( f'%{search_term}%'))
+  venue_search_statement = select(Venue.id, Venue.name).where(Venue.name.ilike( f'%{search_term}%'))
   search_results = db.session.execute(venue_search_statement)
   count = 0
   data = []
@@ -97,7 +99,7 @@ def create_venue_submission_v2():
   
   with Session(db.engine) as session:
     try:    
-      venue = venue_model.Venue( 
+      venue = Venue( 
                                 name=name, 
                                 city=city, 
                                 state=state, 
@@ -124,7 +126,7 @@ def create_venue_submission_v2():
 def edit_venue_form_v2(venue_id):
   form = VenueForm()
   session = Session(db.engine)
-  venue = session.query(venue_model.Venue).get(venue_id)
+  venue = session.query(Venue).get(venue_id)
   venue.genres = json.loads(venue.genres)
   return render_template('forms/edit_venue.html', form = form, venue=venue)
 
@@ -146,7 +148,7 @@ def edit_venue_v2(venue_id):
             
   with Session(db.engine) as session:
     try:    
-      venue = session.query(venue_model.Venue).get(venue_id)
+      venue = session.query(Venue).get(venue_id)
       venue.name = name
       venue.city = city
       venue.state = state
@@ -174,7 +176,7 @@ def delete_venue_v2(venue_id):
   error = False
   with Session(db.engine) as session:
     try:
-      venue = session.query(venue_model.Venue).get(venue_id)
+      venue = session.query(Venue).get(venue_id)
       session.delete(venue)
       session.commit()
       print (f'Venue {venue.name} deleted')
@@ -346,3 +348,49 @@ def delete_artist_v2(artist_id):
         return render_template('pages/home.html')
 
   return None
+
+#  Shows
+#  ----------------------------------------------------------------
+
+@app.route('/V2/shows')
+def shows_v2():
+  
+  statement = select(Show,Venue.name,Artist.name,Artist.image_link).select_from(Venue).join(Show).join(Artist).where(Show.show_datetime > current_date() )
+  shows = db.session.execute(statement).all()
+  shows_reshaped = list( map( lambda show: {
+    "start_time": show[0].show_datetime.isoformat(),
+    "artist_id": show[0].artist_id,
+    "artist_name": show[2],
+    "artist_image_link": show[3],
+    "venue_id": show[0].venue_id,
+    "venue_name": show[1]}, 
+      shows ) )
+  return render_template('pages/shows.html', shows=shows_reshaped)
+
+@app.route('/V2/shows/create')
+def create_shows_v2():
+  form = ShowForm()
+  return render_template('forms/new_show.html', form=form)
+
+@app.route('/V2/shows/create', methods=['POST'])
+def create_show_submission_v2():
+  
+  artist_id = request.form.get('artist_id')
+  venue_id = request.form.get('venue_id')
+  start_time = request.form.get('start_time')
+  
+  with Session(db.engine) as session:
+    show = Show( artist_id=artist_id, venue_id=venue_id, show_datetime=datetime.strptime(start_time,'%Y-%m-%d %H:%M:%S'))
+    print(show)
+    try:
+      session.add(show)
+      print("Show added")
+      session.commit()
+      flash('Show was successfully listed!')
+    except Exception :
+      print(f'show rolled back')
+      session.rollback()
+      flash('Show could not be listed!', 'error')
+      error=True
+    finally:
+      return shows_v2()
