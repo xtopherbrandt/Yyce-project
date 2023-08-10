@@ -29,7 +29,7 @@ def upgrade():
     # But text we're setting in the genres field needs to be single quoted, which can't be done if the whole statement is single quoted. So we need to create
     # a formatted string that takes in the single quoted value
     # Yeesh. Don't name tables with upper cases
-    v = "'All'"
+    v = "'[]'"
     op.execute(f'UPDATE "Venue" SET genres={v} WHERE genres is NULL')
     op.execute('UPDATE "Venue" SET seeking_talent=FALSE WHERE seeking_talent is NULL')
     
