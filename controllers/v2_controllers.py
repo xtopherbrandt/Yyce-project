@@ -158,7 +158,7 @@ def create_venue_submission_v2():
       session.rollback()
       flash('Venue ' + request.form['name'] + ' could not be listed.')
     finally :
-      return render_template('pages/home.html')
+      return show_venue_v2(venue.id)
 
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
 
@@ -172,6 +172,7 @@ def edit_venue_form_v2(venue_id):
 
 @app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_v2(venue_id):
+
   name = request.form.get('name','')
   city = request.form.get('city','')
   state = request.form.get('state','')
@@ -180,7 +181,7 @@ def edit_venue_v2(venue_id):
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
-  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
+  seeking_talent = True if request.form.get('seeking_talent','') == 'on' else False
   seeking_talent_description = request.form.get('seeking_description','')
   
   genres_input = request.form.getlist('genres')
@@ -208,7 +209,7 @@ def edit_venue_v2(venue_id):
       session.rollback()
       flash('Venue ' + request.form['name'] + ' could not be updated.')
     finally :
-      return render_template('pages/home.html')
+      return show_venue_v2(venue_id)
     
 @app.route('/V2/venues/<int:venue_id>/delete', methods=['GET'])
 @app.route('/V2/venues/<int:venue_id>', methods=['DELETE'])
@@ -356,7 +357,7 @@ def edit_artist_v2(artist_id):
       session.rollback()
       flash('Artist ' + request.form['name'] + ' could not be updated.')
     finally :
-      return render_template('pages/home.html')
+      return show_artist_v2(artist_id)
     
 
 @app.route('/V2/artists/create', methods=['GET'])
@@ -402,7 +403,7 @@ def create_artist_submission_v2():
       print("rolled back")
       flash('Artist ' + request.form['name'] + ' could not be listed.')
     finally :
-      return render_template('pages/home.html')
+      return show_artist_v2(artist.id)
     
 @app.route('/V2/artists/<int:artist_id>/delete', methods=['GET'])
 @app.route('/V2/artists/<int:artist_id>', methods=['DELETE'])
