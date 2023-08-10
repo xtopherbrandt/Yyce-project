@@ -17,10 +17,50 @@ import json
 
 @app.route('/V2/venues/<int:venue_id>', methods=['GET'])
 def show_venue_v2(venue_id):
-  venue_information = Venue.query.get(venue_id)
-  temp_genres = json.loads(venue_information.genres)
-  venue_information.genres = [ Genres[genre].value for genre in temp_genres ]
-  if venue_information is not None:
+  venue = Venue.query.get(venue_id)
+  temp_genres = json.loads(venue.genres)
+  venue.genres = [ Genres[genre].value for genre in temp_genres ]
+
+  upcoming_shows_statement = select(Show.show_datetime, Artist.id, Artist.name, Artist.image_link ).select_from(Show).join(Artist).where(Show.show_datetime >= current_date() ).where(Show.venue_id == venue_id)
+  upcoming_shows = db.session.execute(upcoming_shows_statement).all()
+
+  past_shows_statement = select(Show.show_datetime, Artist.id, Artist.name, Artist.image_link).select_from(Show).join(Artist).where(Show.show_datetime < current_date() ).where(Show.venue_id == venue_id)
+  past_shows = db.session.execute(past_shows_statement).all()
+ 
+  upcoming_shows_reshaped = list( map( lambda show: {
+    "start_time": show[0].isoformat(),
+    "artist_id": show[1],
+    "artist_name": show[2],
+    "artist_image_link": show[3]}, 
+      upcoming_shows ) )
+   
+  past_shows_reshaped = list( map( lambda show: {
+    "start_time": show[0].isoformat(),
+    "artist_id": show[1],
+    "artist_name": show[2],
+    "artist_image_link": show[3]}, 
+      past_shows ) )
+  
+  venue_information = {
+    "id": venue.id,
+    "name": venue.name,
+    "city": venue.city,
+    "state": venue.state,
+    "phone": venue.phone,
+    "image_link": venue.image_link,
+    "facebook_link": venue.facebook_link,
+    "website_link": venue.website_link,
+    "genres": venue.genres,
+    "seeking_talent": venue.seeking_talent,
+    "seeking_talent_description": venue.seeking_talent_description,
+    "upcoming_shows_count": len(upcoming_shows),
+    "upcoming_shows": upcoming_shows_reshaped,
+    "past_shows_count": len(past_shows),
+    "past_shows": past_shows_reshaped
+  }
+  
+  print(venue_information)
+  if venue is not None:
     return render_template('pages/show_venue.html', venue=venue_information)
   else :
     flash(f'Could not find a venue with id: {venue_id}')
