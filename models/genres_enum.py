@@ -1,6 +1,12 @@
 import enum
 
-class Genres(enum.Enum):
+class ExtendedEnum(enum.Enum):
+
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+    
+class Genres(ExtendedEnum):
     Alternative = 'Alternative'
     Blues = 'Blues'
     Classical = 'Classical'

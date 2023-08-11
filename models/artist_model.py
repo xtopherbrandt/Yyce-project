@@ -1,6 +1,8 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String, Boolean
+from sqlalchemy.orm import relationship
+from models import artist_genre_model
 from app import db
 
 class Artist(db.Model):
@@ -11,7 +13,7 @@ class Artist(db.Model):
     city = Column(String(120), nullable=False)
     state = Column(String(120), nullable=False)
     phone = Column(String(120), nullable=False)
-    genres = Column(String(120), nullable=False)
+    genres = relationship("Genre", secondary=db.Table("Artist_Genre"))
     image_link = Column(String(500))
     facebook_link = Column(String(120))
     website_link = Column(String(120))
@@ -30,5 +32,3 @@ class Artist(db.Model):
                 website link: {self.website_link} \n \
                 seeking venue: {self.seeking_venue} \n \
                 seeking description: {self.seeking_description} >'
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate

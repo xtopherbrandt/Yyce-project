@@ -3,7 +3,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Boolean
 from sqlalchemy.orm import relationship
-from models import show_model
+from models import show_model, venue_genre_model
 from app import db
 
 class Venue(db.Model):
@@ -18,7 +18,7 @@ class Venue(db.Model):
     image_link = Column(String(500))
     facebook_link = Column(String(120))
     website_link = Column(String(120))
-    genres = Column(String(120), nullable=False)
+    genres = relationship("Genre", secondary=db.Table("Venue_Genre"))
     seeking_talent = Column(Boolean(), nullable=False)
     seeking_talent_description = Column(String(500))
     shows = relationship("Artist", secondary=db.Table("Show"))
