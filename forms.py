@@ -91,7 +91,7 @@ class VenueForm(Form):
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired()],
-        choices= [ (genre.name, genre.value) for genre in Genres ],
+        choices= [ (genre.value) for genre in Genres ],
         coerce=Genres
     )
     facebook_link = StringField(

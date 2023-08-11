@@ -8,8 +8,6 @@ from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
 from models.genre_model import Genre
-from models.artist_genre_model import Artist_Genre
-from models.venue_genre_model import Venue_Genre
 from forms import *
 
 #  Shows

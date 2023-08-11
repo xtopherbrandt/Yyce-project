@@ -8,8 +8,6 @@ from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
 from models.genre_model import Genre
-from models.artist_genre_model import Artist_Genre
-from models.venue_genre_model import Venue_Genre
 from forms import *
 
 #  Venues
@@ -182,7 +180,11 @@ def edit_venue_form_v2(venue_id):
   session = Session(db.engine)
   venue = session.query(Venue).get(venue_id)
   venue_information = create_venue_information(venue)
-  
+
+  form.state.default = venue_information['state']
+  form.seeking_talent.default = venue_information['seeking_talent']
+  form.genres.default = venue_information['genres'] 
+  form.process()
   return render_template('forms/edit_venue.html', form = form, venue=venue_information)
 
 @app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
@@ -196,9 +198,9 @@ def edit_venue_v2(venue_id):
   facebook_link = request.form.get('facebook_link','')
   image_link = request.form.get('image_link','')
   website_link = request.form.get('website_link','')
-  seeking_talent = True if request.form.get('seeking_talent','') == 'on' else False
+  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
   seeking_talent_description = request.form.get('seeking_description','')
-  
+
   genres_input = request.form.getlist('genres')
 
   with Session(db.engine) as session:
@@ -220,7 +222,7 @@ def edit_venue_v2(venue_id):
       venue.website_link = website_link
       venue.seeking_talent = seeking_talent
       venue.seeking_talent_description = seeking_talent_description
-      
+
       session.add(venue)
       session.commit()
       flash('Venue ' + request.form['name'] + ' was successfully updated!')

@@ -8,8 +8,6 @@ from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
 from models.genre_model import Genre
-from models.artist_genre_model import Artist_Genre
-from models.venue_genre_model import Venue_Genre
 from forms import *
 
 #  Artists
@@ -100,6 +98,12 @@ def edit_artist_form_v2(artist_id):
   form = ArtistForm()
   artist = Artist.query.get(artist_id)
   artist_information = create_artist_information(artist)
+  
+  form.state.default = artist_information['state']
+  form.seeking_venue.default = artist_information['seeking_venue']
+  form.genres.default = artist_information['genres'] 
+  form.process()
+  
   return render_template('forms/edit_artist.html', form = form, artist=artist_information)
 
 @app.route('/V2/artists/<int:artist_id>/edit', methods=['POST'])
