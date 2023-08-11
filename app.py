@@ -54,7 +54,7 @@ if not app.debug:
 #----------------------------------------------------------------------------#
 
 # This line needs to come after the app has been initialized
-from controllers import v1_controllers, v2_controllers
+from controllers import v1_controllers, v2_shows_controllers, v2_artists_controllers, v2_venues_controllers
 
 # Default port:
 if __name__ == '__main__':
