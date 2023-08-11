@@ -35,5 +35,6 @@ class Venue(db.Model):
                 facebook link: {self.facebook_link} \n \
                 website link: {self.website_link} \n \
                 seeking talent: {self.seeking_talent} \n \
-                seeking description: {self.seeking_talent_description}>'
+                seeking description: {self.seeking_talent_description} \n \
+                shows: {self.shows}>'
     # TODO: implement any missing fields, as a database migration using Flask-Migrate

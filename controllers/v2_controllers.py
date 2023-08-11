@@ -7,7 +7,9 @@ from app import app, db
 from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
-from models.genres_enum import Genres
+from models.genre_model import Genre
+from models.artist_genre_model import Artist_Genre
+from models.venue_genre_model import Venue_Genre
 from forms import *
 import json
 
@@ -18,9 +20,7 @@ import json
 @app.route('/V2/venues/<int:venue_id>', methods=['GET'])
 def show_venue_v2(venue_id):
   venue = Venue.query.get(venue_id)
-  temp_genres = json.loads(venue.genres)
-  venue.genres = [ Genres[genre].value for genre in temp_genres ]
-
+  
   upcoming_shows_statement = select(Show.show_datetime, Artist.id, Artist.name, Artist.image_link ).select_from(Show).join(Artist).where(Show.show_datetime >= current_date() ).where(Show.venue_id == venue_id)
   upcoming_shows = db.session.execute(upcoming_shows_statement).all()
 
@@ -41,7 +41,23 @@ def show_venue_v2(venue_id):
     "artist_image_link": show[3]}, 
       past_shows ) )
   
-  venue_information = {
+  venue_information = create_venue_information(venue)
+  venue_information["upcoming_shows_count"] = len(upcoming_shows)
+  venue_information["upcoming_shows"] = upcoming_shows_reshaped
+  venue_information["past_shows_count"] = len(past_shows)
+  venue_information["past_shows"] = past_shows_reshaped
+
+  if venue is not None:
+    return render_template('pages/show_venue.html', venue=venue_information)
+  else :
+    flash(f'Could not find a venue with id: {venue_id}')
+    return render_template('pages/home.html')
+
+def create_venue_information(venue):
+  
+  genres_reshaped = list( map( lambda genre: genre.name, venue.genres))
+    
+  return {
     "id": venue.id,
     "name": venue.name,
     "address": venue.address,
@@ -51,21 +67,11 @@ def show_venue_v2(venue_id):
     "image_link": venue.image_link,
     "facebook_link": venue.facebook_link,
     "website_link": venue.website_link,
-    "genres": venue.genres,
+    "genres": genres_reshaped,
     "seeking_talent": venue.seeking_talent,
-    "seeking_talent_description": venue.seeking_talent_description,
-    "upcoming_shows_count": len(upcoming_shows),
-    "upcoming_shows": upcoming_shows_reshaped,
-    "past_shows_count": len(past_shows),
-    "past_shows": past_shows_reshaped
+    "seeking_talent_description": venue.seeking_talent_description
   }
   
-  if venue is not None:
-    return render_template('pages/show_venue.html', venue=venue_information)
-  else :
-    flash(f'Could not find a venue with id: {venue_id}')
-    return render_template('pages/home.html')
- 
 @app.route('/V2/venues', methods=['GET'])
 def venues_v2():
   data=[]
@@ -135,9 +141,13 @@ def create_venue_submission_v2():
   seeking_talent_description = request.form.get('seeking_description','')
     
   genres_input = request.form.getlist('genres')
-  genres_json = json.dumps(genres_input)
-  
+  venue_id = 0
   with Session(db.engine) as session:
+    genres = []
+    for genre_name in genres_input:
+      genre = session.query(Genre).filter_by(name=genre_name).all()
+      if (len(genre)>0):
+        genres.append(genre[0])
     try:    
       venue = Venue( 
                                 name=name, 
@@ -145,7 +155,7 @@ def create_venue_submission_v2():
                                 state=state, 
                                 address=address, 
                                 phone=phone, 
-                                genres = genres_json,
+                                genres = genres,
                                 facebook_link=facebook_link, 
                                 image_link=image_link, 
                                 website_link=website_link, 
@@ -153,12 +163,13 @@ def create_venue_submission_v2():
                                 seeking_talent_description=seeking_talent_description)
       session.add(venue)
       session.commit()
+      venue_id = venue.id
       flash('Venue ' + request.form['name'] + ' was successfully listed!')
     except :
       session.rollback()
       flash('Venue ' + request.form['name'] + ' could not be listed.')
     finally :
-      return show_venue_v2(venue.id)
+      return show_venue_v2(venue_id)
 
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
 
@@ -167,8 +178,9 @@ def edit_venue_form_v2(venue_id):
   form = VenueForm()
   session = Session(db.engine)
   venue = session.query(Venue).get(venue_id)
-  venue.genres = json.loads(venue.genres)
-  return render_template('forms/edit_venue.html', form = form, venue=venue)
+  venue_information = create_venue_information(venue)
+  
+  return render_template('forms/edit_venue.html', form = form, venue=venue_information)
 
 @app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_v2(venue_id):
@@ -185,9 +197,13 @@ def edit_venue_v2(venue_id):
   seeking_talent_description = request.form.get('seeking_description','')
   
   genres_input = request.form.getlist('genres')
-  genres_json = json.dumps(genres_input)
-            
+
   with Session(db.engine) as session:
+    genres = []
+    for genre_name in genres_input:
+      genre = session.query(Genre).filter_by(name=genre_name).all()
+      if (len(genre)>0):
+        genres.append(genre[0])
     try:    
       venue = session.query(Venue).get(venue_id)
       venue.name = name
@@ -195,7 +211,7 @@ def edit_venue_v2(venue_id):
       venue.state = state
       venue.address = address
       venue.phone = phone
-      venue.genres = genres_json
+      venue.genres = genres
       venue.facebook_link = facebook_link
       venue.image_link = image_link
       venue.website_link = website_link
@@ -247,8 +263,6 @@ def artists_v2():
 @app.route('/V2/artists/<int:artist_id>', methods=['GET'])
 def show_artist_v2(artist_id):
   artist = Artist.query.get(artist_id)
-  temp_genres = json.loads(artist.genres)
-  artist.genres = [ Genres[genre].value for genre in temp_genres ]
     
   upcoming_shows_statement = select(Show.show_datetime, Venue.id, Venue.name, Venue.image_link ).select_from(Show).join(Venue).where(Show.show_datetime >= current_date() ).where(Show.artist_id == artist_id)
   upcoming_shows = db.session.execute(upcoming_shows_statement).all()
@@ -270,7 +284,19 @@ def show_artist_v2(artist_id):
     "venue_image_link": show[3]}, 
       past_shows ) )
   
-  artist_information = {
+  artist_information = create_artist_information(artist)
+  artist_information["upcoming_shows_count"] = len(upcoming_shows)
+  artist_information["upcoming_shows"] = upcoming_shows_reshaped
+  artist_information["past_shows_count"] = len(past_shows)
+  artist_information["past_shows"] = past_shows_reshaped
+  
+  return render_template('pages/show_artist.html', artist=artist_information)
+
+def create_artist_information(artist):
+  
+  genres_reshaped = list( map( lambda genre: genre.name, artist.genres))
+    
+  return {
     "id": artist.id,
     "name": artist.name,
     "city": artist.city,
@@ -279,16 +305,10 @@ def show_artist_v2(artist_id):
     "image_link": artist.image_link,
     "facebook_link": artist.facebook_link,
     "website_link": artist.website_link,
-    "genres": artist.genres,
+    "genres": genres_reshaped,
     "seeking_venue": artist.seeking_venue,
-    "seeking_description": artist.seeking_description,
-    "upcoming_shows_count": len(upcoming_shows),
-    "upcoming_shows": upcoming_shows_reshaped,
-    "past_shows_count": len(past_shows),
-    "past_shows": past_shows_reshaped
+    "seeking_description": artist.seeking_description
   }
-  
-  return render_template('pages/show_artist.html', artist=artist_information)
   
 @app.route('/V2/artists/search', methods=['POST'])
 def search_artists_v2():
@@ -318,8 +338,8 @@ def search_artists_v2():
 def edit_artist_form_v2(artist_id):
   form = ArtistForm()
   artist = Artist.query.get(artist_id)
-  artist.genres = json.loads(artist.genres)
-  return render_template('forms/edit_artist.html', form = form, artist=artist)
+  artist_information = create_artist_information(artist)
+  return render_template('forms/edit_artist.html', form = form, artist=artist_information)
 
 @app.route('/V2/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_v2(artist_id):
@@ -334,16 +354,22 @@ def edit_artist_v2(artist_id):
   seeking_description = request.form.get('seeking_description','')
   
   genres_input = request.form.getlist('genres')
-  genres_json = json.dumps(genres_input)
             
   with Session(db.engine) as session:
+    genres = []
+    for genre_name in genres_input:
+      genre = session.query(Genre).filter_by(name=genre_name).all()
+      if (len(genre)>0):
+        genres.append(genre[0])
+    print(genres_input)
+    print(genres)
     try:    
       artist = session.query(Artist).get(artist_id)
       artist.name = name
       artist.city = city
       artist.state = state
       artist.phone = phone
-      artist.genres = genres_json
+      artist.genres = genres
       artist.facebook_link = facebook_link
       artist.image_link = image_link
       artist.website_link = website_link
@@ -378,16 +404,20 @@ def create_artist_submission_v2():
   seeking_description = request.form.get('seeking_description','')
     
   genres_input = request.form.getlist('genres')
-  genres_json = json.dumps(genres_input)
  
   with Session(db.engine) as session:
+    genres = []
+    for genre_name in genres_input:
+      genre = session.query(Genre).filter_by(name=genre_name).all()
+      if (len(genre)>0):
+        genres.append(genre[0])
     try:    
       artist = Artist( 
                       name=name, 
                       city=city, 
                       state=state, 
                       phone=phone, 
-                      genres = genres_json,
+                      genres = genres,
                       facebook_link=facebook_link, 
                       image_link=image_link, 
                       website_link=website_link, 
