@@ -26,4 +26,6 @@ class Genres(ExtendedEnum):
     RocknRoll = 'Rock n Roll'
     Soul = 'Soul'
     Other = 'Other'
+    Western = 'Western'
+    DeathMetal = 'Death Metal'
     

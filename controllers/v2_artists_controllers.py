@@ -8,6 +8,7 @@ from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
 from models.genre_model import Genre
+from models.artist_genre_model import Artist_Genre
 from forms import *
 
 #  Artists
@@ -114,7 +115,6 @@ def edit_artist_v2(artist_id):
     form = VenueForm()
     return render_template('forms/new_artist.html', form=form)    
 
-  print (form.seeking_venue.data)
   name = form.name.data
   city = form.city.data
   state = form.state.data
@@ -127,28 +127,41 @@ def edit_artist_v2(artist_id):
   genres_input = form.genres.data
             
   with Session(db.engine) as session:
-    genres = []
-    for genre_name in genres_input:
-      genre = session.query(Genre).filter_by(name=genre_name).all()
-      if (len(genre)>0):
-        genres.append(genre[0])
-    print(genres_input)
-    print(genres)
+
     try:    
+      genres = []
+      for genre_name in genres_input:
+        genre = session.query(Genre).filter_by(name=genre_name).first()
+        
+        if (genre is None):
+          new_genre = Genre(name=genre_name)
+          db.session.add(new_genre)
+          db.session.commit()
+          genres.append(new_genre)
+        else:
+          genres.append(genre)
+
       artist = session.query(Artist).get(artist_id)
+
       artist.name = name
       artist.city = city
       artist.state = state
       artist.phone = phone
-      artist.genres = genres
       artist.facebook_link = facebook_link
       artist.image_link = image_link
       artist.website_link = website_link
       artist.seeking_venue = seeking_venue
       artist.seeking_description = seeking_description
-      
+      artist.genres = []
+
       session.add(artist)
       session.commit()
+
+      for genre in genres:
+        artist_genre = Artist_Genre(artist_id=artist.id, genre_id=genre.id)
+        db.session.add(artist_genre)
+        db.session.commit()
+
       flash('Artist ' + request.form['name'] + ' was successfully updated!')
     except :
       session.rollback()
@@ -187,27 +200,40 @@ def create_artist_submission_v2():
   genres_input = form.genres.data
  
   with Session(db.engine) as session:
-    genres = []
-    for genre_name in genres_input:
-      genre = session.query(Genre).filter_by(name=genre_name).all()
-      if (len(genre)>0):
-        genres.append(genre[0])
     try:    
-      artist = Artist( 
-                      name=name, 
-                      city=city, 
-                      state=state, 
-                      phone=phone, 
-                      genres = genres,
-                      facebook_link=facebook_link, 
-                      image_link=image_link, 
-                      website_link=website_link, 
-                      seeking_venue=seeking_venue, 
-                      seeking_description=seeking_description)
-      print(artist)
+      genres = []
+      for genre_name in genres_input:
+        genre = session.query(Genre).filter_by(name=genre_name).first()
+        
+        if (genre is None):
+          new_genre = Genre(name=genre_name)
+          db.session.add(new_genre)
+          db.session.commit()
+          genres.append(new_genre)
+        else:
+          genres.append(genre)
+
+      artist = session.query(Artist).get(artist_id)
+
+      artist.name = name
+      artist.city = city
+      artist.state = state
+      artist.phone = phone
+      artist.facebook_link = facebook_link
+      artist.image_link = image_link
+      artist.website_link = website_link
+      artist.seeking_venue = seeking_venue
+      artist.seeking_description = seeking_description
+      artist.genres = []
+
       session.add(artist)
       session.commit()
-      print("committed")
+
+      for genre in genres:
+        artist_genre = Artist_Genre(artist_id=artist.id, genre_id=genre.id)
+        db.session.add(artist_genre)
+        db.session.commit()
+        
       flash('Artist ' + request.form['name'] + ' was successfully listed!')
     except :
       session.rollback()

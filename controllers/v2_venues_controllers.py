@@ -10,6 +10,7 @@ from models.venue_model import Venue
 from models.artist_model import Artist
 from models.show_model import Show
 from models.genre_model import Genre
+from models.venue_genre_model import Venue_Genre
 from forms import *
 
 #  Venues
@@ -153,27 +154,40 @@ def create_venue_submission_v2():
   venue_id = 0
   
   with Session(db.engine) as session:
-    genres = []
-    for genre_name in genres_input:
-      genre = session.query(Genre).filter_by(name=genre_name).all()
-      if (len(genre)>0):
-        genres.append(genre[0])
     try:    
-      venue = Venue( 
-                    name=name, 
-                    city=city, 
-                    state=state, 
-                    address=address, 
-                    phone=phone, 
-                    genres = genres,
-                    facebook_link=facebook_link, 
-                    image_link=image_link, 
-                    website_link=website_link, 
-                    seeking_talent=seeking_talent, 
-                    seeking_talent_description=seeking_talent_description)
+      genres = []
+      for genre_name in genres_input:
+        genre = session.query(Genre).filter_by(name=genre_name).first()
+        
+        if (genre is None):
+          new_genre = Genre(name=genre_name)
+          db.session.add(new_genre)
+          db.session.commit()
+          genres.append(new_genre)
+        else:
+          genres.append(genre)
+        
+      venue = session.query(Venue).get(venue_id)
+      venue.name = name
+      venue.city = city
+      venue.state = state
+      venue.address = address
+      venue.phone = phone
+      venue.genres = []
+      venue.facebook_link = facebook_link
+      venue.image_link = image_link
+      venue.website_link = website_link
+      venue.seeking_talent = seeking_talent
+      venue.seeking_talent_description = seeking_talent_description
+
       session.add(venue)
       session.commit()
-      venue_id = venue.id
+      
+      for genre in genres:
+        venue_genre = Venue_Genre(venue_id=venue.id, genre_id=genre.id)
+        db.session.add(venue_genre)
+        db.session.commit()
+        
       flash('Venue ' + request.form['name'] + ' was successfully listed!')
     except :
       session.rollback()
@@ -222,19 +236,27 @@ def edit_venue_v2(venue_id):
   genres_input = form.genres.data
 
   with Session(db.engine) as session:
-    genres = []
-    for genre_name in genres_input:
-      genre = session.query(Genre).filter_by(name=genre_name).all()
-      if (len(genre)>0):
-        genres.append(genre[0])
+
     try:    
+      genres = []
+      for genre_name in genres_input:
+        genre = session.query(Genre).filter_by(name=genre_name).first()
+        
+        if (genre is None):
+          new_genre = Genre(name=genre_name)
+          db.session.add(new_genre)
+          db.session.commit()
+          genres.append(new_genre)
+        else:
+          genres.append(genre)
+        
       venue = session.query(Venue).get(venue_id)
       venue.name = name
       venue.city = city
       venue.state = state
       venue.address = address
       venue.phone = phone
-      venue.genres = genres
+      venue.genres = []
       venue.facebook_link = facebook_link
       venue.image_link = image_link
       venue.website_link = website_link
@@ -243,6 +265,12 @@ def edit_venue_v2(venue_id):
 
       session.add(venue)
       session.commit()
+      
+      for genre in genres:
+        venue_genre = Venue_Genre(venue_id=venue.id, genre_id=genre.id)
+        db.session.add(venue_genre)
+        db.session.commit()
+              
       flash('Venue ' + request.form['name'] + ' was successfully updated!')
     except :
       session.rollback()
