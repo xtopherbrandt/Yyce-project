@@ -30,8 +30,9 @@ def validate_state(self, field):
         raise ValidationError('Invalid state.')
         
 def validate_genres(self, field):
-    if field.data not in Genres.list():
-        raise ValidationError('Invalid state.')
+    for genre in field.data:
+        if genre not in Genres.list():
+            raise ValidationError('Invalid genres.')
 
 def validate(self, **kwargs):
     # `**kwargs` to match the method's signature in the `FlaskForm` class.
@@ -68,17 +69,17 @@ class VenueForm(FlaskForm):
         'phone', validators=[validate_phone]
     )
     image_link = StringField(
-        'image_link', validators=[URL()]
+        'image_link'
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired(), validate_genres],
         choices= [ (genre.value) for genre in Genres ]
     )
     facebook_link = StringField(
-        'facebook_link', validators=[URL()]
+        'facebook_link'
     )
     website_link = StringField(
-        'website_link', validators=[URL()]
+        'website_link'
     )
 
     seeking_talent = BooleanField( 'seeking_talent' )
@@ -104,18 +105,18 @@ class ArtistForm(FlaskForm):
         'phone', validators=[validate_phone]
     )
     image_link = StringField(
-        'image_link', validators=[URL()]
+        'image_link'
     )
     genres = SelectMultipleField(
         'genres', validators=[DataRequired(), validate_genres],
         choices= [ (genre.value) for genre in Genres ]
      )
     facebook_link = StringField(
-        'facebook_link', validators=[URL()]
+        'facebook_link'
      )
 
     website_link = StringField(
-        'website_link', validators=[URL()]
+        'website_link'
      )
 
     seeking_venue = BooleanField( 'seeking_venue' )
