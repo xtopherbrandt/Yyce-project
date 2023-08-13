@@ -128,19 +128,30 @@ def create_venue_form_v2():
 
 @app.route('/V2/venues/create', methods=['POST'])
 def create_venue_submission_v2():
-  name = request.form.get('name','')
-  city = request.form.get('city','')
-  state = request.form.get('state','')
-  address = request.form.get('address','')
-  phone = request.form.get('phone','')
-  facebook_link = request.form.get('facebook_link','')
-  image_link = request.form.get('image_link','')
-  website_link = request.form.get('website_link','')
-  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
-  seeking_talent_description = request.form.get('seeking_description','')
-    
-  genres_input = request.form.getlist('genres')
+  form = VenueForm(request.form, meta={'csrf': False})
+  
+  if not form.validate():
+    message = []
+    for field, errors in form.errors.items():
+        for error in errors:
+            message.append(f"{field}: {error}")
+    flash('Please fix the following errors: ' + ', '.join(message))
+    form = VenueForm()
+    return render_template('forms/new_venue.html', form=form)    
+  
+  name = form.name.data
+  city = form.city.data
+  state = form.state.data
+  address = form.address.data
+  phone = form.phone.data
+  facebook_link = form.facebook_link.data
+  image_link = form.image_link.data
+  website_link = form.website_link.data
+  seeking_talent = form.seeking_talent.data
+  seeking_talent_description = form.seeking_description.data
+  genres_input = form.genres.data
   venue_id = 0
+  
   with Session(db.engine) as session:
     genres = []
     for genre_name in genres_input:
@@ -149,17 +160,17 @@ def create_venue_submission_v2():
         genres.append(genre[0])
     try:    
       venue = Venue( 
-                                name=name, 
-                                city=city, 
-                                state=state, 
-                                address=address, 
-                                phone=phone, 
-                                genres = genres,
-                                facebook_link=facebook_link, 
-                                image_link=image_link, 
-                                website_link=website_link, 
-                                seeking_talent=seeking_talent, 
-                                seeking_talent_description=seeking_talent_description)
+                    name=name, 
+                    city=city, 
+                    state=state, 
+                    address=address, 
+                    phone=phone, 
+                    genres = genres,
+                    facebook_link=facebook_link, 
+                    image_link=image_link, 
+                    website_link=website_link, 
+                    seeking_talent=seeking_talent, 
+                    seeking_talent_description=seeking_talent_description)
       session.add(venue)
       session.commit()
       venue_id = venue.id
@@ -187,19 +198,28 @@ def edit_venue_form_v2(venue_id):
 
 @app.route('/V2/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_v2(venue_id):
+  form = VenueForm(request.form, meta={'csrf': False})
+  
+  if not form.validate():
+    message = []
+    for field, errors in form.errors.items():
+        for error in errors:
+            message.append(f"{field}: {error}")
+    flash('Please fix the following errors: ' + ', '.join(message))
+    form = VenueForm()
+    return render_template('forms/new_venue.html', form=form)    
 
-  name = request.form.get('name','')
-  city = request.form.get('city','')
-  state = request.form.get('state','')
-  address = request.form.get('address','')
-  phone = request.form.get('phone','')
-  facebook_link = request.form.get('facebook_link','')
-  image_link = request.form.get('image_link','')
-  website_link = request.form.get('website_link','')
-  seeking_talent = True if request.form.get('seeking_talent','') == 'y' else False
-  seeking_talent_description = request.form.get('seeking_description','')
-
-  genres_input = request.form.getlist('genres')
+  name = form.name.data
+  city = form.city.data
+  state = form.state.data
+  address = form.address.data
+  phone = form.phone.data
+  facebook_link = form.facebook_link.data
+  image_link = form.image_link.data
+  website_link = form.website_link.data
+  seeking_talent = form.seeking_talent.data
+  seeking_talent_description = form.seeking_description.data
+  genres_input = form.genres.data
 
   with Session(db.engine) as session:
     genres = []

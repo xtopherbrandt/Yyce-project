@@ -36,10 +36,20 @@ def create_shows_v2():
 
 @app.route('/V2/shows/create', methods=['POST'])
 def create_show_submission_v2():
+  form = ShowForm(request.form, meta={'csrf': False})
   
-  artist_id = request.form.get('artist_id')
-  venue_id = request.form.get('venue_id')
-  start_time = request.form.get('start_time')
+  if not form.validate():
+    message = []
+    for field, errors in form.errors.items():
+        for error in errors:
+            message.append(f"{field}: {error}")
+    flash('Please fix the following errors: ' + ', '.join(message))
+    form = VenueForm()
+    return render_template('forms/new_show.html', form=form)    
+  
+  artist_id = form.artist_id.data
+  venue_id = form.venue_id.data
+  start_time = form.start_time.data
   
   with Session(db.engine) as session:
     show = Show( artist_id=artist_id, venue_id=venue_id, show_datetime=datetime.strptime(start_time,'%Y-%m-%d %H:%M:%S'))

@@ -103,17 +103,28 @@ def edit_artist_form_v2(artist_id):
 
 @app.route('/V2/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_v2(artist_id):
-  name = request.form.get('name','')
-  city = request.form.get('city','')
-  state = request.form.get('state','')
-  phone = request.form.get('phone','')
-  facebook_link = request.form.get('facebook_link','')
-  image_link = request.form.get('image_link','')
-  website_link = request.form.get('website_link','')
-  seeking_venue = True if request.form.get('seeking_venue','') == 'y' else False
-  seeking_description = request.form.get('seeking_description','')
+  form = ArtistForm(request.form, meta={'csrf': False})
   
-  genres_input = request.form.getlist('genres')
+  if not form.validate():
+    message = []
+    for field, errors in form.errors.items():
+        for error in errors:
+            message.append(f"{field}: {error}")
+    flash('Please fix the following errors: ' + ', '.join(message))
+    form = VenueForm()
+    return render_template('forms/new_artist.html', form=form)    
+
+  print (form.seeking_venue.data)
+  name = form.name.data
+  city = form.city.data
+  state = form.state.data
+  phone = form.phone.data
+  facebook_link = form.facebook_link.data
+  image_link = form.image_link.data
+  website_link = form.website_link.data
+  seeking_venue = form.seeking_venue.data
+  seeking_description = form.seeking_description.data
+  genres_input = form.genres.data
             
   with Session(db.engine) as session:
     genres = []
@@ -153,17 +164,27 @@ def create_artist_form_v2():
 
 @app.route('/V2/artists/create', methods=['POST'])
 def create_artist_submission_v2():
-  name = request.form.get('name','')
-  city = request.form.get('city','')
-  state = request.form.get('state','')
-  phone = request.form.get('phone','')
-  facebook_link = request.form.get('facebook_link','')
-  image_link = request.form.get('image_link','')
-  website_link = request.form.get('website_link','')
-  seeking_venue = True if request.form.get('seeking_venue','') == 'y' else False
-  seeking_description = request.form.get('seeking_description','')
-    
-  genres_input = request.form.getlist('genres')
+  form = ArtistForm(request.form, meta={'csrf': False})
+  
+  if not form.validate():
+    message = []
+    for field, errors in form.errors.items():
+        for error in errors:
+            message.append(f"{field}: {error}")
+    flash('Please fix the following errors: ' + ', '.join(message))
+    form = VenueForm()
+    return render_template('forms/new_artist.html', form=form)    
+
+  name = form.name.data
+  city = form.city.data
+  state = form.state.data
+  phone = form.phone.data
+  facebook_link = form.facebook_link.data
+  image_link = form.image_link.data
+  website_link = form.website_link.data
+  seeking_venue = form.seeking_venue.data
+  seeking_description = form.seeking_description.data
+  genres_input = form.genres.data
  
   with Session(db.engine) as session:
     genres = []
