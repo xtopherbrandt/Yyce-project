@@ -19,6 +19,7 @@ class Artist(db.Model):
     website_link = Column(String(120))
     seeking_venue = Column(Boolean(), nullable=False)
     seeking_description = Column(String(500))
+    shows = relationship('Show', backref='artist', lazy='joined', cascade="all, delete")
     
     def __repr__(self):
       return f'<Artist {self.id} \n \

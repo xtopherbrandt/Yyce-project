@@ -21,8 +21,8 @@ class Venue(db.Model):
     genres = relationship("Genre", secondary=db.Table("Venue_Genre"))
     seeking_talent = Column(Boolean(), nullable=False)
     seeking_talent_description = Column(String(500))
-    shows = relationship("Artist", secondary=db.Table("Show"))
-
+    shows = relationship('Show', backref='venue', lazy='joined', cascade="all, delete")
+    
     def __repr__(self):
       return f'<Venue {self.id} \n \
                 name: {self.name} \n \

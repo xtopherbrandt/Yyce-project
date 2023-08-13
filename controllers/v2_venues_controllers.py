@@ -3,6 +3,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import current_date
 
+from datetime import datetime
+
 from app import app, db
 from models.venue_model import Venue
 from models.artist_model import Artist
@@ -22,30 +24,26 @@ def show_venue_v2(venue_id):
     return render_template('errors/404.html'), 404
   
   print(venue)
-  upcoming_shows_statement = select(Show.show_datetime, Artist.id, Artist.name, Artist.image_link ).select_from(Show).join(Artist).where(Show.show_datetime >= current_date() ).where(Show.venue_id == venue_id)
-  upcoming_shows = db.session.execute(upcoming_shows_statement).all()
-
-  past_shows_statement = select(Show.show_datetime, Artist.id, Artist.name, Artist.image_link).select_from(Show).join(Artist).where(Show.show_datetime < current_date() ).where(Show.venue_id == venue_id)
-  past_shows = db.session.execute(past_shows_statement).all()
- 
-  upcoming_shows_reshaped = list( map( lambda show: {
-    "start_time": show[0].isoformat(),
-    "artist_id": show[1],
-    "artist_name": show[2],
-    "artist_image_link": show[3]}, 
-      upcoming_shows ) )
-   
-  past_shows_reshaped = list( map( lambda show: {
-    "start_time": show[0].isoformat(),
-    "artist_id": show[1],
-    "artist_name": show[2],
-    "artist_image_link": show[3]}, 
-      past_shows ) )
+    
+  upcoming_shows_reshaped = []
+  past_shows_reshaped = []
   
+  for show in venue.shows:
+    reshaped_show = {
+    "start_time": show.show_datetime.isoformat(),
+    "artist_id": show.artist_id,
+    "artist_name": show.artist.name,
+    "artist_image_link": show.artist.image_link
+    }
+    if show.show_datetime >= datetime.now() :
+      upcoming_shows_reshaped.append(reshaped_show)
+    else:
+      past_shows_reshaped.append(reshaped_show)
+    
   venue_information = create_venue_information(venue)
-  venue_information["upcoming_shows_count"] = len(upcoming_shows)
+  venue_information["upcoming_shows_count"] = len(upcoming_shows_reshaped)
   venue_information["upcoming_shows"] = upcoming_shows_reshaped
-  venue_information["past_shows_count"] = len(past_shows)
+  venue_information["past_shows_count"] = len(past_shows_reshaped)
   venue_information["past_shows"] = past_shows_reshaped
 
   if venue is not None:

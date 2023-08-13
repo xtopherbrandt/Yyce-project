@@ -23,30 +23,25 @@ def artists_v2():
 def show_artist_v2(artist_id):
   artist = Artist.query.get(artist_id)
     
-  upcoming_shows_statement = select(Show.show_datetime, Venue.id, Venue.name, Venue.image_link ).select_from(Show).join(Venue).where(Show.show_datetime >= current_date() ).where(Show.artist_id == artist_id)
-  upcoming_shows = db.session.execute(upcoming_shows_statement).all()
-
-  past_shows_statement = select(Show.show_datetime, Venue.id, Venue.name, Venue.image_link).select_from(Show).join(Venue).where(Show.show_datetime < current_date() ).where(Show.artist_id == artist_id)
-  past_shows = db.session.execute(past_shows_statement).all()
- 
-  upcoming_shows_reshaped = list( map( lambda show: {
-    "start_time": show[0].isoformat(),
-    "venue_id": show[1],
-    "venue_name": show[2],
-    "venue_image_link": show[3]}, 
-      upcoming_shows ) )
-   
-  past_shows_reshaped = list( map( lambda show: {
-    "start_time": show[0].isoformat(),
-    "venue_id": show[1],
-    "venue_name": show[2],
-    "venue_image_link": show[3]}, 
-      past_shows ) )
+  upcoming_shows_reshaped = []
+  past_shows_reshaped = []
+  
+  for show in artist.shows:
+    reshaped_show = {
+    "start_time": show.show_datetime.isoformat(),
+    "venue_id": show.venue_id,
+    "venue_name": show.venue.name,
+    "venue_image_link": show.venue.image_link
+    }
+    if show.show_datetime >= datetime.now() :
+      upcoming_shows_reshaped.append(reshaped_show)
+    else:
+      past_shows_reshaped.append(reshaped_show)
   
   artist_information = create_artist_information(artist)
-  artist_information["upcoming_shows_count"] = len(upcoming_shows)
+  artist_information["upcoming_shows_count"] = len(upcoming_shows_reshaped)
   artist_information["upcoming_shows"] = upcoming_shows_reshaped
-  artist_information["past_shows_count"] = len(past_shows)
+  artist_information["past_shows_count"] = len(past_shows_reshaped)
   artist_information["past_shows"] = past_shows_reshaped
   
   return render_template('pages/show_artist.html', artist=artist_information)
